@@ -7,7 +7,7 @@
       </header>
 
       <nav class="navigation-grid">
-        <div v-if="isAuthenticated" class="nav-card">
+        <div v-if="isAuthenticated && userRole !== 'MEDICO'" class="nav-card">
           <div class="nav-icon">👨‍⚕️</div>
           <h3>Lista de Médicos</h3>
           <p>Buscar y filtrar médicos por especialidad, nombre y calificación</p>
@@ -16,11 +16,29 @@
           </router-link>
         </div>
 
-        <div v-if="isAuthenticated" class="nav-card">
+        <div v-if="isAuthenticated && userRole !== 'MEDICO'" class="nav-card">
           <div class="nav-icon">📅</div>
           <h3>Mis Citas</h3>
           <p>Ver y gestionar tus citas médicas</p>
           <router-link to="/patient-appointments" class="nav-btn">
+            Ver Citas
+          </router-link>
+        </div>
+
+        <div v-if="isAuthenticated && userRole === 'MEDICO'" class="nav-card">
+          <div class="nav-icon">🗓️</div>
+          <h3>Mi Calendario</h3>
+          <p>Ver calendario de mis citas disponibles</p>
+          <router-link :to="`/doctor/${featuredDoctorId}/calendar`" class="nav-btn">
+            Ver Calendario
+          </router-link>
+        </div>
+
+        <div v-if="isAuthenticated && userRole === 'MEDICO'" class="nav-card">
+          <div class="nav-icon">📋</div>
+          <h3>Gestionar Citas</h3>
+          <p>Ver y gestionar citas de pacientes</p>
+          <router-link to="/doctor-appointments" class="nav-btn">
             Ver Citas
           </router-link>
         </div>
@@ -61,16 +79,25 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/index.js'
+import { apiService } from '../services/api.js'
 
 const authStore = useAuthStore()
+const featuredDoctorId = ref(2)
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const userRole = computed(() => authStore.user?.rol)
 
 const handleLogout = () => {
   authStore.logout()
 }
+
+onMounted(async () => {
+
+    featuredDoctorId.value = authStore.user?.id || 2
+  
+})
 </script>
 
 <style scoped>

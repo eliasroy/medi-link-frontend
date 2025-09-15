@@ -9,6 +9,9 @@
         <div class="doctor-info">
           <h2>{{ doctorName }}</h2>
           <p>ID: {{ doctorId }}</p>
+          <button v-if="userRole === 'MEDICO'" @click="openCreateModal" class="create-btn">
+            Crear Horario
+          </button>
         </div>
       </header>
 
@@ -63,7 +66,7 @@
       ></VueCal>
 
       <!-- Selected Appointment -->
-      <div v-if="selectedSlot" class="appointment-section">
+      <div v-if="selectedSlot && userRole !== 'MEDICO'" class="appointment-section">
         <h3>Cita Seleccionada</h3>
         <div class="appointment-details">
           <p><strong>Fecha:</strong> {{ selectedSlot.date }}</p>
@@ -85,14 +88,47 @@
       <div v-if="message" class="message" :class="{ 'success': message.type === 'success', 'error': message.type === 'error' }">
         {{ message.text }}
       </div>
+
+      <!-- Create Horario Modal -->
+      <div v-if="showCreateModal" class="modal-overlay" @click="closeCreateModal">
+        <div class="modal-content" @click.stop>
+          <h3>Crear Nuevo Horario</h3>
+          <form @submit.prevent="saveHorario">
+            <div class="form-group">
+              <label for="fecha">Fecha:</label>
+              <input type="date" id="fecha" v-model="formData.fecha" required />
+            </div>
+            <div class="form-group">
+              <label for="hora_inicio">Hora Inicio:</label>
+              <input type="time" id="hora_inicio" v-model="formData.hora_inicio" required />
+            </div>
+            <div class="form-group">
+              <label for="hora_fin">Hora Fin:</label>
+              <input type="time" id="hora_fin" v-model="formData.hora_fin" required />
+            </div>
+            <div class="form-group">
+              <label for="modalidad">Modalidad:</label>
+              <select id="modalidad" v-model="formData.modalidad" required>
+                <option value="VIRTUAL">Virtual</option>
+                <option value="PRESENCIAL">Presencial</option>
+              </select>
+            </div>
+            <div class="modal-actions">
+              <button type="submit" class="save-btn">Guardar</button>
+              <button type="button" @click="closeCreateModal" class="cancel-btn">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
+import { useAuthStore } from '../stores/index.js'
 import VueCal from 'vue-cal'
 import 'vue-cal/dist/vuecal.css'
 
@@ -104,9 +140,11 @@ export default {
   setup() {
     const route = useRoute()
     const router = useRouter()
+    const authStore = useAuthStore()
+    const userRole = computed(() => authStore.user?.rol)
 
     const doctorId = ref(route.params.doctorId)
-    const doctorName = ref(route.query.doctorName || 'Médico')
+    const doctorName = ref('Médico')
     const selectedSlot = ref(null)
     const message = ref(null)
     const events = ref([])
@@ -115,6 +153,25 @@ export default {
       modalidad: ''
     })
     const currentView = ref(null)
+    const showCreateModal = ref(false)
+    const formData = reactive({
+      fecha: '',
+      hora_inicio: '',
+      hora_fin: '',
+      modalidad: 'VIRTUAL'
+    })
+
+    const loadDoctorInfo = async () => {
+      try {
+        const doctors = await apiService.getDoctors({ id_medico: doctorId.value })
+        if (doctors && doctors.length > 0) {
+          const doctor = doctors[0]
+          doctorName.value = `${doctor.nombre} ${doctor.paterno} ${doctor.materno}`
+        }
+      } catch (error) {
+        console.error('Error loading doctor info:', error)
+      }
+    }
 
     const loadAvailableSlots = async (fechaInicio = null, fechaFin = null) => {
       try {
@@ -214,16 +271,8 @@ export default {
     }
 
     const handleFilterChange = () => {
-      if (!currentView.value) return
-      const startDate = new Date(currentView.value.startDate)
-      const endDate = new Date(currentView.value.endDate)
-
-      // Format dates as YYYY-MM-DD
-      const fechaInicio = startDate.toISOString().split('T')[0]
-      const fechaFin = endDate.toISOString().split('T')[0]
-
-      console.log('Loading data for date range:', fechaInicio, 'to', fechaFin)
-      loadAvailableSlots(fechaInicio, fechaFin)
+      console.log('Filters changed, loading available slots for current week')
+      loadAvailableSlots()
     }
 
     const handleViewChange = (view) => {
@@ -266,16 +315,53 @@ export default {
     }
 
     const goBack = () => {
-      router.push('/doctors')
+      if (userRole.value === 'MEDICO') {
+        router.push('/')
+      } else {
+        router.push('/doctors')
+      }
     }
 
-    onMounted(() => {
-      // Calculate dates for the previous week range
+    const openCreateModal = () => {
+      showCreateModal.value = true
+    }
+
+    const closeCreateModal = () => {
+      showCreateModal.value = false
+      formData.fecha = ''
+      formData.hora_inicio = ''
+      formData.hora_fin = ''
+      formData.modalidad = 'VIRTUAL'
+    }
+
+    const saveHorario = async () => {
+      try {
+        const data = {
+          id_medico: doctorId.value,
+          ...formData
+        }
+        await apiService.saveHorario(data)
+        message.value = { text: 'Horario creado exitosamente', type: 'success' }
+        closeCreateModal()
+        // Reload current view
+        if (currentView.value) {
+          handleViewChange(currentView.value)
+        } else {
+          loadAvailableSlots()
+        }
+      } catch (error) {
+        message.value = { text: 'Error al crear horario: ' + error.message, type: 'error' }
+      }
+    }
+
+    onMounted(async () => {
+      await loadDoctorInfo()
+
+      // Calculate dates for the current week starting from today
       const now = new Date()
       const startOfWeek = new Date(now)
-      startOfWeek.setDate(now.getDate() - 6)
       const endOfWeek = new Date(now)
-      endOfWeek.setDate(now.getDate() + 1)
+      endOfWeek.setDate(now.getDate() + 7)
 
       const fechaInicio = startOfWeek.toISOString().split('T')[0]
       const fechaFin = endOfWeek.toISOString().split('T')[0]
@@ -291,12 +377,18 @@ export default {
       message,
       events,
       filters,
+      userRole,
       onEventClick,
       handleFilterChange,
       handleViewChange,
       bookAppointment,
       cancelSelection,
-      goBack
+      goBack,
+      showCreateModal,
+      formData,
+      openCreateModal,
+      closeCreateModal,
+      saveHorario
     }
   }
 }
@@ -577,6 +669,101 @@ export default {
   background: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
+}
+
+.create-btn {
+  background: #25ced1;
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.create-btn:hover {
+  background: #1fa3a6;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  margin: 1rem;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #25ced1;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.save-btn,
+.cancel-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.save-btn {
+  background: #28a745;
+  color: #ffffff;
+}
+
+.save-btn:hover {
+  background: #218838;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: #ffffff;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
 }
 
 @media (max-width: 768px) {

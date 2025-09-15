@@ -6,6 +6,7 @@ import Doctors from '../views/Doctors.vue'
 import DoctorCalendar from '../views/DoctorCalendar.vue'
 import AppointmentForm from '../views/AppointmentForm.vue'
 import PatientAppointments from '../views/PatientAppointments.vue'
+import DoctorAppointments from '../views/DoctorAppointments.vue'
 
 const routes = [
   {
@@ -43,6 +44,11 @@ const routes = [
     path: '/patient-appointments',
     name: 'PatientAppointments',
     component: PatientAppointments
+  },
+  {
+    path: '/doctor-appointments',
+    name: 'DoctorAppointments',
+    component: DoctorAppointments
   }
 ]
 

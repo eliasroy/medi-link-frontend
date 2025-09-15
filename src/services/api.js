@@ -128,5 +128,54 @@ export const apiService = {
     } catch (error) {
       throw error;
     }
+  },
+  getDoctorAppointments: async () => {
+    try {
+      return await requestService.get('/api/citas/medico');
+    } catch (error) {
+      throw error;
+    }
+  },
+  deleteCita: async (citaId) => {
+    try {
+      return await requestService.delete(`/api/citas/${citaId}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+  iniciarConsulta: async (consultaData) => {
+    try {
+      return await requestService.post('/api/consultas/iniciar', consultaData);
+    } catch (error) {
+      throw error;
+    }
+  },
+  getConsultaByCita: async (citaId) => {
+    try {
+      return await requestService.get(`/api/consultas/cita/${citaId}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateConsulta: async (consultaId, consultaData) => {
+    try {
+      return await requestService.put(`/api/consultas/actualizar/${consultaId}`, consultaData);
+    } catch (error) {
+      throw error;
+    }
+  },
+  calificarConsulta: async (calificacionData) => {
+    try {
+      return await requestService.post('/api/consultas/calificar', calificacionData);
+    } catch (error) {
+      throw error;
+    }
+  },
+  saveHorario: async (horarioData) => {
+    try {
+      return await requestService.post('/api/horarios/save', horarioData);
+    } catch (error) {
+      throw error;
+    }
   }
 }

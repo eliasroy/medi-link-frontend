@@ -5,7 +5,7 @@
         <button @click="$router.go(-1)" class="back-btn">
           ← Volver
         </button>
-        <h1>Mis Citas</h1>
+        <h1>Citas de Pacientes</h1>
       </div>
 
       <!-- Loading State -->
@@ -28,23 +28,32 @@
           <thead>
             <tr>
               <th>ID Cita</th>
+              <th>Paciente Nombre</th>
+              <th>Paciente Paterno</th>
+              <th>Paciente Materno</th>
               <th>Estado</th>
+              <th>Calificación</th>
               <th>Modalidad</th>
               <th>Título</th>
               <th>Fecha</th>
               <th>Hora Inicio</th>
               <th>Hora Fin</th>
-              <th>Médico</th>
-              <th>Calificación</th>
-              <th>Accion</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="appointment in appointments" :key="appointment.id_cita">
               <td>{{ appointment.id_cita }}</td>
+              <td>{{ appointment.paciente.usuario.nombre }}</td>
+              <td>{{ appointment.paciente.usuario.paterno }}</td>
+              <td>{{ appointment.paciente.usuario.materno }}</td>
               <td>
                 <span class="status-badge" :class="getStatusClass(appointment.estado)">
                   {{ appointment.estado }}
+                </span>
+              </td>
+              <td>
+                <span class="rating" :class="getRatingClass(appointment.consulta?.calificacion)">
+                  ⭐ {{ appointment.consulta?.calificacion || '0' }}
                 </span>
               </td>
               <td>{{ appointment.modalidad }}</td>
@@ -52,16 +61,6 @@
               <td>{{ appointment.horario.fecha }}</td>
               <td>{{ appointment.horario.hora_inicio }}</td>
               <td>{{ appointment.horario.hora_fin }}</td>
-              <td>{{ appointment.horario?.medico?.usuario?.nombre }} {{ appointment.horario?.medico?.usuario?.paterno }}</td>
-              <td>
-                <span class="rating" :class="getRatingClass(appointment.horario?.medico?.calificacion_promedio)">
-                  ⭐ {{ appointment.consulta?.calificacion || '0' }}
-                </span>
-              </td>
-              <td>
-                <button v-if="appointment.estado !== 'ATENDIDA' && appointment.estado !== 'CANCELADA'" @click="deleteAppointment(appointment.id_cita)" class="delete-btn">Eliminar</button>
-                <button v-if="appointment.estado === 'ATENDIDA'" @click="openCalificarModal(appointment)" class="calificar-btn">Calificar</button>
-              </td>
             </tr>
           </tbody>
         </table>
@@ -72,25 +71,42 @@
         <p>No se encontraron citas.</p>
       </div>
 
-      <!-- Calificar Modal -->
-      <div v-if="showCalificarModal" class="modal-overlay" @click="closeCalificarModal">
+      <!-- Modal -->
+      <div v-if="showModal" class="modal-overlay" @click="closeModal">
         <div class="modal-content" @click.stop>
-          <h3>Calificar Consulta</h3>
-          <form @submit.prevent="submitCalificar">
+          <h3>{{ modalMode === 'atender' ? 'Iniciar Consulta' : 'Detalle de Consulta' }}</h3>
+          <form @submit.prevent="submitForm">
             <div class="form-group">
-              <label for="calificacion">Calificación:</label>
-              <select id="calificacion" v-model="calificacion" required>
-                <option value="">Seleccionar calificación</option>
-                <option value="1">1 - Muy malo</option>
-                <option value="2">2 - Malo</option>
-                <option value="3">3 - Regular</option>
-                <option value="4">4 - Bueno</option>
-                <option value="5">5 - Excelente</option>
+              <label for="motivo">Motivo de la consulta:</label>
+              <textarea id="motivo" v-model="consultaData.motivo" :required="modalMode === 'atender'" placeholder="Ingrese el motivo de la consulta"></textarea>
+            </div>
+            <div v-if="modalMode === 'detalle'" class="form-group">
+              <label for="diagnostico">Diagnóstico:</label>
+              <textarea id="diagnostico" v-model="consultaData.diagnostico" placeholder="Ingrese el diagnóstico"></textarea>
+            </div>
+            <div v-if="modalMode === 'detalle'" class="form-group">
+              <label for="pathArchivo">Path Archivo:</label>
+              <input type="text" id="pathArchivo" v-model="consultaData.pathArchivo" placeholder="Ingrese el path del archivo">
+            </div>
+            <div v-if="modalMode === 'detalle'" class="form-group">
+              <label for="tratamiento">Tratamiento:</label>
+              <textarea id="tratamiento" v-model="consultaData.tratamiento" placeholder="Ingrese el tratamiento"></textarea>
+            </div>
+            <div v-if="modalMode === 'detalle'" class="form-group">
+              <label for="observaciones">Observaciones:</label>
+              <textarea id="observaciones" v-model="consultaData.observaciones" placeholder="Ingrese las observaciones"></textarea>
+            </div>
+            <div v-if="modalMode === 'detalle'" class="form-group">
+              <label for="estado">Estado:</label>
+              <select id="estado" v-model="consultaData.estado">
+                <option value="">Seleccionar estado</option>
+                <option v-if="selectedAppointment?.modalidad === 'PRESENCIAL'" value="DIAGNOSTICADA">Diagnosticada</option>
+                <option value="FINALIZADA">Finalizada</option>
               </select>
             </div>
             <div class="modal-actions">
-              <button type="button" @click="closeCalificarModal" class="cancel-btn">Cancelar</button>
-              <button type="submit" class="submit-btn">Calificar</button>
+              <button type="button" @click="closeModal" class="cancel-btn">Cancelar</button>
+              <button type="submit" class="submit-btn">{{ modalMode === 'atender' ? 'Iniciar Consulta' : 'Actualizar' }}</button>
             </div>
           </form>
         </div>
@@ -109,9 +125,18 @@ const authStore = useAuthStore()
 const appointments = ref([])
 const loading = ref(true)
 const error = ref(null)
-const showCalificarModal = ref(false)
+const showModal = ref(false)
+const modalMode = ref('') // 'atender' or 'detalle'
 const selectedAppointment = ref(null)
-const calificacion = ref('')
+const consultaData = ref({
+  id_consulta: null,
+  motivo: '',
+  diagnostico: '',
+  pathArchivo: '',
+  tratamiento: '',
+  observaciones: '',
+  estado: ''
+})
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString()
@@ -126,6 +151,21 @@ const getStatusClass = (status) => {
   }
 }
 
+const getRatingClass = (rating) => {
+  if (!rating) return 'default'
+  const numRating = parseFloat(rating)
+  if (numRating >= 5) return 'excellent'
+  if (numRating >= 3) return 'good'
+  if (numRating >= 1) return 'average'
+  return 'poor'
+}
+
+const getStars = (rating) => {
+  if (!rating) return 'N/A'
+  const num = parseInt(rating)
+  return '⭐'.repeat(num)
+}
+
 const getScheduleStatusClass = (status) => {
   switch (status) {
     case 'DISPONIBLE': return 'available'
@@ -135,28 +175,9 @@ const getScheduleStatusClass = (status) => {
   }
 }
 
-const getRatingClass = (rating) => {
-  const numRating = parseFloat(rating)
-  if (numRating >= 9) return 'excellent'
-  if (numRating >= 8) return 'good'
-  if (numRating >= 7) return 'average'
-  return 'poor'
-}
-
 const fetchAppointments = async () => {
   try {
-    const token = authStore.token || localStorage.getItem('token')
-    if (!token) {
-      error.value = 'No authentication token found'
-      return
-    }
-    const decoded = decodeJWT(token)
-    if (!decoded || !decoded.id) {
-      error.value = 'Invalid token'
-      return
-    }
-    const patientId = decoded.id
-    const response = await apiService.getPatientAppointments(patientId)
+    const response = await apiService.getDoctorAppointments()
     if (response.success) {
       appointments.value = response.data
     } else {
@@ -169,62 +190,111 @@ const fetchAppointments = async () => {
   }
 }
 
-const deleteAppointment = async (appointmentId) => {
-  if (!confirm('¿Estás seguro de que quieres eliminar esta cita?')) {
+const openAtenderModal = (appointment) => {
+  selectedAppointment.value = appointment
+  modalMode.value = 'atender'
+  consultaData.value = {
+    id_consulta: null,
+    motivo: '',
+    diagnostico: '',
+    pathArchivo: '',
+    tratamiento: '',
+    observaciones: ''
+  }
+  showModal.value = true
+}
+
+const openDetalleModal = async (appointment) => {
+  selectedAppointment.value = appointment
+  modalMode.value = 'detalle'
+
+  try {
+    const response = await apiService.getConsultaByCita(appointment.id_cita)
+    if (response.success && response.data) {
+      consultaData.value = {
+        id_consulta: response.data.id_consulta,
+        motivo: response.data.motivo || '',
+        diagnostico: response.data.diagnostico || '',
+        pathArchivo: response.data.pathArchivo || '',
+        tratamiento: response.data.tratamiento || '',
+        observaciones: response.data.observaciones || '',
+        estado: response.data.estado || ''
+      }
+    } else {
+      // No consulta exists, initialize empty
+      consultaData.value = {
+        id_consulta: null,
+        motivo: '',
+        diagnostico: '',
+        pathArchivo: '',
+        tratamiento: '',
+        observaciones: '',
+        estado: ''
+      }
+    }
+  } catch (err) {
+    alert('Error al cargar detalles: ' + err.message)
     return
   }
-  try {
-    const response = await apiService.deleteCita(appointmentId)
-    if (response.success || response.mensaje) {
-      // Refresh the list
-      await fetchAppointments()
-    } else {
-      error.value = 'Failed to delete appointment'
-    }
-  } catch (err) {
-    error.value = err.message || 'An error occurred while deleting'
+
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  selectedAppointment.value = null
+  modalMode.value = ''
+  consultaData.value = {
+    id_consulta: null,
+    motivo: '',
+    diagnostico: '',
+    pathArchivo: '',
+    tratamiento: '',
+    observaciones: '',
+    estado: ''
   }
 }
 
-const openCalificarModal = (appointment) => {
-  selectedAppointment.value = appointment
-  calificacion.value = ''
-  showCalificarModal.value = true
-}
+const submitForm = async () => {
+  if (modalMode.value === 'atender') {
+    if (!consultaData.value.motivo.trim()) return
 
-const closeCalificarModal = () => {
-  showCalificarModal.value = false
-  selectedAppointment.value = null
-  calificacion.value = ''
-}
-
-const submitCalificar = async () => {
-  if (!calificacion.value) return
-
-  try {
-    // Get consulta by cita id
-    const consultaResponse = await apiService.getConsultaByCita(selectedAppointment.value.id_cita)
-    if (!consultaResponse.success || !consultaResponse.data) {
-      alert('No se encontró la consulta para calificar')
-      return
+    try {
+      const response = await apiService.iniciarConsulta({
+        id_cita: selectedAppointment.value.id_cita,
+        motivo: consultaData.value.motivo.trim()
+      })
+      if (response.success) {
+        alert('Consulta iniciada exitosamente')
+        closeModal()
+        await fetchAppointments()
+      } else {
+        alert('Error al iniciar la consulta')
+      }
+    } catch (err) {
+      alert('Error: ' + err.message)
     }
+  } else if (modalMode.value === 'detalle') {
+    if (!consultaData.value.id_consulta) return
 
-    const idConsulta = consultaResponse.data.id_consulta
-
-    const response = await apiService.calificarConsulta({
-      id_consulta: idConsulta,
-      calificacion: parseInt(calificacion.value)
-    })
-
-    if (response.success) {
-      alert('Consulta calificada exitosamente')
-      closeCalificarModal()
-      await fetchAppointments()
-    } else {
-      alert('Error al calificar la consulta')
+    try {
+      const updateData = {
+        diagnostico: consultaData.value.diagnostico,
+        pathArchivo: consultaData.value.pathArchivo,
+        tratamiento: consultaData.value.tratamiento,
+        observaciones: consultaData.value.observaciones,
+        estado: consultaData.value.estado
+      }
+      const response = await apiService.updateConsulta(consultaData.value.id_consulta, updateData)
+      if (response.success) {
+        alert('Consulta actualizada exitosamente')
+        closeModal()
+      } else {
+        alert('Error al actualizar la consulta')
+      }
+    } catch (err) {
+      alert('Error: ' + err.message)
     }
-  } catch (err) {
-    alert('Error: ' + err.message)
   }
 }
 
@@ -326,36 +396,6 @@ onMounted(() => {
   background: #218838;
 }
 
-.delete-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  background: #dc3545;
-  color: #ffffff;
-}
-
-.delete-btn:hover {
-  background: #c82333;
-}
-
-.calificar-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  background: #17a2b8;
-  color: #ffffff;
-}
-
-.calificar-btn:hover {
-  background: #138496;
-}
-
 .table-container {
   overflow-x: auto;
   padding: 2rem;
@@ -454,6 +494,37 @@ onMounted(() => {
   color: #721c24;
 }
 
+.atender-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #007bff;
+  color: #ffffff;
+}
+
+.atender-btn:hover {
+  background: #0056b3;
+}
+
+.detalle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #17a2b8;
+  color: #ffffff;
+  margin-left: 0.5rem;
+}
+
+.detalle-btn:hover {
+  background: #138496;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -491,6 +562,18 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
 .form-group select {
   width: 100%;
   padding: 0.75rem;
