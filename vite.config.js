@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     allowedHosts: [
-      'https://medilink-frontend-latest.onrender.com/'
+      'medilink-frontend-latest.onrender.com' 
     ],
     proxy: {
       '/api': {
