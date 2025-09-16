@@ -38,6 +38,7 @@
               <th>Fecha</th>
               <th>Hora Inicio</th>
               <th>Hora Fin</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -61,6 +62,10 @@
               <td>{{ appointment.horario.fecha }}</td>
               <td>{{ appointment.horario.hora_inicio }}</td>
               <td>{{ appointment.horario.hora_fin }}</td>
+              <td>
+                <button v-if="appointment.estado === 'PENDIENTE'" @click="openAtenderModal(appointment)" class="atender-btn">Atender</button>
+                <button v-if="appointment.estado === 'CONFIRMADA'" @click="openDetalleModal(appointment)" class="detalle-btn">Detalle</button>
+              </td>
             </tr>
           </tbody>
         </table>
