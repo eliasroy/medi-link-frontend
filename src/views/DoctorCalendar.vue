@@ -209,29 +209,7 @@ export default {
             currentDate.setDate(startDate.getDate() + i)
             const dateStr = currentDate.toISOString().split('T')[0]
 
-            // Add some mock events
-            if (i % 2 === 0) {
-              mockEvents.push({
-                start: `${dateStr} 10:00`,
-                end: `${dateStr} 11:00`,
-                title: 'Consulta dermatología',
-                content: 'Especialidad: Medicina de Emergencias<br>Médico: CMP0002',
-                class: 'available-slot',
-                id: i + 1,
-                modalidad: 'VIRTUAL'
-              })
-            }
-            if (i % 3 === 0) {
-              mockEvents.push({
-                start: `${dateStr} 14:00`,
-                end: `${dateStr} 15:00`,
-                title: 'Consulta ocupada',
-                content: 'Especialidad: Medicina de Emergencias<br>Médico: CMP0002',
-                class: 'occupied-slot',
-                id: i + 10,
-                modalidad: 'PRESENCIAL'
-              })
-            }
+           
           }
           events.value = mockEvents
         }
