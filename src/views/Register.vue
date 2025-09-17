@@ -115,6 +115,21 @@
           </div>
         </div>
 
+        <div class="form-group full-width">
+          <label for="medico-especialidad">Especialidad:</label>
+          <select
+            id="medico-especialidad"
+            v-model="medicoForm.id_especialidad"
+            required
+            class="form-input"
+          >
+            <option value="">Seleccionar Especialidad</option>
+            <option v-for="specialty in specialties" :key="specialty.id_especialidad" :value="specialty.id_especialidad">
+              {{ specialty.nombre }}
+            </option>
+          </select>
+        </div>
+
         <button type="submit" class="register-btn" :disabled="loading">
           {{ loading ? 'Registrando...' : 'Registrar Médico' }}
         </button>
@@ -248,7 +263,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
 
@@ -269,7 +284,8 @@ export default {
       password: '',
       telefono: '',
       nro_colegiatura: '',
-      anios_experiencia: ''
+      anios_experiencia: '',
+      id_especialidad: ''
     })
 
     const pacienteForm = ref({
@@ -284,6 +300,17 @@ export default {
       direccion: ''
     })
 
+    const specialties = ref([])
+
+    const loadSpecialties = async () => {
+      try {
+        const response = await apiService.getSpecialties()
+        specialties.value = response
+      } catch (err) {
+        console.error('Error loading specialties:', err)
+      }
+    }
+
     const handleRegisterMedico = async () => {
       loading.value = true
       error.value = ''
@@ -292,7 +319,8 @@ export default {
         const formData = {
           ...medicoForm.value,
           telefono: parseInt(medicoForm.value.telefono),
-          anios_experiencia: parseInt(medicoForm.value.anios_experiencia)
+          anios_experiencia: parseInt(medicoForm.value.anios_experiencia),
+          id_especialidad: parseInt(medicoForm.value.id_especialidad)
         }
         const response = await apiService.registerMedico(formData)
         success.value = response.mensaje
@@ -327,6 +355,10 @@ export default {
       }
     }
 
+    onMounted(() => {
+      loadSpecialties()
+    })
+
     return {
       userType,
       loading,
@@ -334,6 +366,7 @@ export default {
       success,
       medicoForm,
       pacienteForm,
+      specialties,
       handleRegisterMedico,
       handleRegisterPaciente
     }

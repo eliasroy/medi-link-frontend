@@ -15,47 +15,40 @@ export const apiService = {
     }
   },
   registerMedico: async (medicoData) => {
-    // Mock response for development
-    if (USE_MOCK) {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          resolve({
-            mensaje: "Médico registrado exitosamente",
-            usuario: {
-              id: Date.now(),
-              ...medicoData,
-              rol: "MEDICO"
-            }
-          })
-        }, 1000)
-      })
-    }
 
     try {
-      return await requestService.post('/api/usuarios/medico', medicoData);
+      const uri = import.meta.env.VITE_URL_BACKEND || 'http://localhost:3000';
+      const response = await fetch(`${uri}/api/usuarios/medico`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(medicoData)
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       throw error;
     }
   },
   registerPaciente: async (pacienteData) => {
-    // Mock response for development
-    if (USE_MOCK) {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          resolve({
-            mensaje: "Paciente registrado exitosamente",
-            usuario: {
-              id: Date.now(),
-              ...pacienteData,
-              rol: "PACIENTE"
-            }
-          })
-        }, 1000)
-      })
-    }
+
 
     try {
-      return await requestService.post('/api/usuarios/paciente', pacienteData);
+      const uri = import.meta.env.VITE_URL_BACKEND || 'http://localhost:3000';
+      const response = await fetch(`${uri}/api/usuarios/paciente`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pacienteData)
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
     } catch (error) {
       throw error;
     }
@@ -69,8 +62,13 @@ export const apiService = {
   },
   getSpecialties: async () => {
     try {
-      const response = await requestService.get('/api/especialidades');
-      return response;
+      const uri = import.meta.env.VITE_URL_BACKEND || 'http://localhost:3000';
+      const response = await fetch(`${uri}/api/especialidades`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.data; // Return the data array
     } catch (error) {
       throw error;
     }
