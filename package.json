@@ -16,6 +16,7 @@
     "@ant-design/icons-vue": "^7.0.1",
     "ant-design-vue": "^4.2.6",
     "axios": "^1.12.1",
+    "chalk": "^5.6.2",
     "cors": "^2.8.5",
     "lodash.debounce": "^4.0.8",
     "pinia": "^3.0.3",

@@ -1,90 +1,171 @@
 <template>
-  <div class="home-container">
-    <div class="home-content">
-      <header class="home-header">
-        <h1>Sistema Médico</h1>
-        <p>Gestión de usuarios y médicos</p>
-      </header>
-
-      <nav class="navigation-grid">
-        <div v-if="isAuthenticated && userRole !== 'MEDICO'" class="nav-card">
-          <div class="nav-icon">👨‍⚕️</div>
-          <h3>Lista de Médicos</h3>
-          <p>Buscar y filtrar médicos por especialidad, nombre y calificación</p>
-          <router-link to="/doctors" class="nav-btn">
-            Ver Médicos
-          </router-link>
+  <a-layout style="min-height: 100vh">
+    <a-layout-sider
+      v-model:collapsed="collapsed"
+      :trigger="null"
+      collapsible
+      :width="250"
+      :collapsed-width="80"
+      theme="light"
+      @mouseenter="handleMouseEnter"
+      @mouseleave="handleMouseLeave"
+    >
+      <div class="logo">
+        <h2 v-if="!collapsed">MediLink</h2>
+        <h2 v-else>ML</h2>
+      </div>
+      <a-menu
+        v-model:selectedKeys="selectedKeys"
+        mode="inline"
+        theme="light"
+        @click="handleMenuClick"
+      >
+        <a-menu-item key="home" v-if="isAuthenticated">
+          <home-outlined />
+          <span>Home</span>
+        </a-menu-item>
+        <a-menu-item key="doctors" v-if="isAuthenticated && userRole !== 'MEDICO'">
+          <user-outlined />
+          <span>Lista de Médicos</span>
+        </a-menu-item>
+        <a-menu-item key="patient-appointments" v-if="isAuthenticated && userRole !== 'MEDICO'">
+          <calendar-outlined />
+          <span>Mis Citas</span>
+        </a-menu-item>
+        <a-menu-item key="doctor-calendar" v-if="isAuthenticated && userRole === 'MEDICO'">
+          <calendar-outlined />
+          <span>Mi Calendario</span>
+        </a-menu-item>
+        <a-menu-item key="doctor-appointments" v-if="isAuthenticated && userRole === 'MEDICO'">
+          <file-text-outlined />
+          <span>Gestionar Citas</span>
+        </a-menu-item>
+        <a-menu-item key="login" v-if="!isAuthenticated">
+          <login-outlined />
+          <span>Iniciar Sesión</span>
+        </a-menu-item>
+        <a-menu-item key="register" v-if="!isAuthenticated">
+          <user-add-outlined />
+          <span>Registro</span>
+        </a-menu-item>
+        <a-menu-item key="logout" v-if="isAuthenticated">
+          <logout-outlined />
+          <span>Cerrar Sesión</span>
+        </a-menu-item>
+      </a-menu>
+    </a-layout-sider>
+    <a-layout>
+      <a-layout-header style="background: #fff; padding: 0 16px; display: flex; align-items: center; justify-content: space-between;">
+        <a-button
+          type="text"
+          @click="toggleCollapsed"
+          style="font-size: 16px; width: 64px; height: 64px;"
+        >
+          <menu-unfold-outlined v-if="collapsed" />
+          <menu-fold-outlined v-else />
+        </a-button>
+        <div>
+          <h1 style="margin: 0; color: #25ced1;">Sistema Médico</h1>
         </div>
+        <div></div>
+      </a-layout-header>
+      <a-layout-content style="margin: 24px 16px; padding: 24px; background: #fff; min-height: 280px;">
+        <div class="home-content">
+          <header class="home-header">
+            <p>Gestión de usuarios y médicos</p>
+          </header>
 
-        <div v-if="isAuthenticated && userRole !== 'MEDICO'" class="nav-card">
-          <div class="nav-icon">📅</div>
-          <h3>Mis Citas</h3>
-          <p>Ver y gestionar tus citas médicas</p>
-          <router-link to="/patient-appointments" class="nav-btn">
-            Ver Citas
-          </router-link>
+          <nav class="navigation-grid" v-if="isAuthenticated">
+            <div v-if="userRole !== 'MEDICO'" class="nav-card">
+              <div class="nav-icon">👨‍⚕️</div>
+              <h3>Lista de Médicos</h3>
+              <p>Buscar y filtrar médicos por especialidad, nombre y calificación</p>
+              <router-link to="/doctors" class="nav-btn">
+                Ver Médicos
+              </router-link>
+            </div>
+
+            <div v-if="userRole !== 'MEDICO'" class="nav-card">
+              <div class="nav-icon">📅</div>
+              <h3>Mis Citas</h3>
+              <p>Ver y gestionar tus citas médicas</p>
+              <router-link to="/patient-appointments" class="nav-btn">
+                Ver Citas
+              </router-link>
+            </div>
+
+            <div v-if="userRole === 'MEDICO'" class="nav-card">
+              <div class="nav-icon">🗓️</div>
+              <h3>Mi Calendario</h3>
+              <p>Ver calendario de mis citas disponibles</p>
+              <router-link :to="`/doctor/${featuredDoctorId}/calendar`" class="nav-btn">
+                Ver Calendario
+              </router-link>
+            </div>
+
+            <div v-if="userRole === 'MEDICO'" class="nav-card">
+              <div class="nav-icon">📋</div>
+              <h3>Gestionar Citas</h3>
+              <p>Ver y gestionar citas de pacientes</p>
+              <router-link to="/doctor-appointments" class="nav-btn">
+                Ver Citas
+              </router-link>
+            </div>
+          </nav>
+
+          <div v-if="!isAuthenticated" class="auth-section">
+            <div class="nav-card">
+              <div class="nav-icon">🔐</div>
+              <h3>Iniciar Sesión</h3>
+              <p>Accede a tu cuenta de usuario</p>
+              <router-link to="/login" class="nav-btn secondary">
+                Iniciar Sesión
+              </router-link>
+            </div>
+
+            <div class="nav-card">
+              <div class="nav-icon">📝</div>
+              <h3>Registro</h3>
+              <p>Crea una nueva cuenta como médico o paciente</p>
+              <router-link to="/register" class="nav-btn secondary">
+                Registrarse
+              </router-link>
+            </div>
+          </div>
+
+          <footer class="home-footer">
+            <p>&copy; 2025 MediLink. Todos los derechos reservados.</p>
+          </footer>
         </div>
-
-        <div v-if="isAuthenticated && userRole === 'MEDICO'" class="nav-card">
-          <div class="nav-icon">🗓️</div>
-          <h3>Mi Calendario</h3>
-          <p>Ver calendario de mis citas disponibles</p>
-          <router-link :to="`/doctor/${featuredDoctorId}/calendar`" class="nav-btn">
-            Ver Calendario
-          </router-link>
-        </div>
-
-        <div v-if="isAuthenticated && userRole === 'MEDICO'" class="nav-card">
-          <div class="nav-icon">📋</div>
-          <h3>Gestionar Citas</h3>
-          <p>Ver y gestionar citas de pacientes</p>
-          <router-link to="/doctor-appointments" class="nav-btn">
-            Ver Citas
-          </router-link>
-        </div>
-
-        <div v-if="isAuthenticated" class="nav-card">
-          <div class="nav-icon">🚪</div>
-          <h3>Cerrar Sesión</h3>
-          <p>Salir de tu cuenta de usuario</p>
-          <button @click="handleLogout" class="nav-btn logout-btn">
-            Cerrar Sesión
-          </button>
-        </div>
-
-        <div v-if="!isAuthenticated" class="nav-card">
-          <div class="nav-icon">🔐</div>
-          <h3>Iniciar Sesión</h3>
-          <p>Accede a tu cuenta de usuario</p>
-          <router-link to="/login" class="nav-btn secondary">
-            Iniciar Sesión
-          </router-link>
-        </div>
-
-        <div v-if="!isAuthenticated" class="nav-card">
-          <div class="nav-icon">📝</div>
-          <h3>Registro</h3>
-          <p>Crea una nueva cuenta como médico o paciente</p>
-          <router-link to="/register" class="nav-btn secondary">
-            Registrarse
-          </router-link>
-        </div>
-      </nav>
-
-      <footer class="home-footer">
-        <p>&copy; 2025 MediLink. Todos los derechos reservados.</p>
-      </footer>
-    </div>
-  </div>
+      </a-layout-content>
+    </a-layout>
+  </a-layout>
 </template>
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/index.js'
 import { apiService } from '../services/api.js'
+import { useRouter } from 'vue-router'
+import {
+  HomeOutlined,
+  UserOutlined,
+  CalendarOutlined,
+  FileTextOutlined,
+  LoginOutlined,
+  UserAddOutlined,
+  LogoutOutlined,
+  MenuUnfoldOutlined,
+  MenuFoldOutlined
+} from '@ant-design/icons-vue'
+import { Layout, Menu, Button } from 'ant-design-vue'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const featuredDoctorId = ref(2)
+const collapsed = ref(true)
+const manualCollapsed = ref(true)
+const selectedKeys = ref(['home'])
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const userRole = computed(() => authStore.user?.rol)
@@ -93,139 +174,36 @@ const handleLogout = () => {
   authStore.logout()
 }
 
-onMounted(async () => {
+const handleMenuClick = ({ key }) => {
+  if (key === 'logout') {
+    handleLogout()
+  } else if (key === 'doctor-calendar') {
+    router.push(`/doctor/${featuredDoctorId.value}/calendar`)
+  } else {
+    router.push(`/${key}`)
+  }
+}
 
-    featuredDoctorId.value = authStore.user?.id || 2
-  
+const toggleCollapsed = () => {
+  manualCollapsed.value = !manualCollapsed.value
+  collapsed.value = manualCollapsed.value
+}
+
+const handleMouseEnter = () => {
+  if (manualCollapsed.value) {
+    collapsed.value = false
+  }
+}
+
+const handleMouseLeave = () => {
+  if (manualCollapsed.value) {
+    collapsed.value = true
+  }
+}
+
+onMounted(async () => {
+  featuredDoctorId.value = authStore.user?.id || 2
 })
 </script>
 
-<style scoped>
-.home-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #25ced1, #ffffff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-}
-
-.home-content {
-  max-width: 1000px;
-  width: 100%;
-  text-align: center;
-}
-
-.home-header {
-  margin-bottom: 3rem;
-}
-
-.home-header h1 {
-  font-size: 3rem;
-  color: #ffffff;
-  margin: 0 0 1rem 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.home-header p {
-  font-size: 1.2rem;
-  color: #ffffff;
-  margin: 0;
-  opacity: 0.9;
-}
-
-.navigation-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-bottom: 3rem;
-}
-
-.nav-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.nav-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-}
-
-.nav-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.nav-card h3 {
-  font-size: 1.5rem;
-  color: #25ced1;
-  margin: 0 0 1rem 0;
-}
-
-.nav-card p {
-  color: #666;
-  margin: 0 0 1.5rem 0;
-  line-height: 1.5;
-}
-
-.nav-btn {
-  display: inline-block;
-  padding: 0.75rem 2rem;
-  background: #25ced1;
-  color: #ffffff;
-  text-decoration: none;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: background 0.3s;
-}
-
-.nav-btn:hover {
-  background: #1fa3a6;
-}
-
-.nav-btn.secondary {
-  background: #6c757d;
-}
-
-.nav-btn.secondary:hover {
-  background: #5a6268;
-}
-
-.nav-btn.logout-btn {
-  background: #dc3545;
-}
-
-.nav-btn.logout-btn:hover {
-  background: #c82333;
-}
-
-.home-footer {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.home-footer p {
-  color: #ffffff;
-  margin: 0;
-  opacity: 0.8;
-}
-
-@media (max-width: 768px) {
-  .home-header h1 {
-    font-size: 2rem;
-  }
-
-  .navigation-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .nav-card {
-    padding: 1.5rem;
-  }
-}
-</style>
+<style src="../assets/home.css" scoped></style>
