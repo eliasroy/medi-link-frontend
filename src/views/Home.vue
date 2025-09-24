@@ -160,6 +160,8 @@ import {
 } from '@ant-design/icons-vue'
 import { Layout, Menu, Button } from 'ant-design-vue'
 
+const gsap = window.gsap
+
 const router = useRouter()
 const authStore = useAuthStore()
 const featuredDoctorId = ref(2)
@@ -203,6 +205,19 @@ const handleMouseLeave = () => {
 
 onMounted(async () => {
   featuredDoctorId.value = authStore.user?.id || 2
+
+  // GSAP animations for buttons
+  gsap.utils.toArray('.nav-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+    btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+  })
+
+  // Animation for toggle button
+  const toggleBtn = document.querySelector('.ant-btn')
+  if (toggleBtn) {
+    toggleBtn.addEventListener('mouseenter', () => gsap.to(toggleBtn, { scale: 1.1, duration: 0.2 }))
+    toggleBtn.addEventListener('mouseleave', () => gsap.to(toggleBtn, { scale: 1, duration: 0.2 }))
+  }
 })
 </script>
 

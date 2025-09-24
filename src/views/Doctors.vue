@@ -164,6 +164,8 @@ import { useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
 import debounce from 'lodash.debounce'
 
+const gsap = window.gsap
+
 export default {
   name: 'Doctors',
   setup() {
@@ -252,6 +254,17 @@ export default {
     onMounted(() => {
       loadSpecialties()
       loadDoctors()
+
+      // GSAP animations
+      gsap.utils.toArray('.filter-input, .filter-select').forEach(input => {
+        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+      })
+
+      gsap.utils.toArray('.clear-btn, .search-btn, .calendar-btn, .retry-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+        btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+      })
     })
 
     return {

@@ -126,6 +126,7 @@ import { useAuthStore } from '../stores/index.js'
 import { apiService } from '../services/api.js'
 import { decodeJWT } from '../utils/helpers.js'
 
+const gsap = window.gsap
 const authStore = useAuthStore()
 const appointments = ref([])
 const loading = ref(true)
@@ -305,6 +306,17 @@ const submitForm = async () => {
 
 onMounted(() => {
   fetchAppointments()
+
+  // GSAP animations
+  gsap.utils.toArray('.back-btn, .atender-btn, .detalle-btn, .retry-btn, .cancel-btn, .submit-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+    btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+  })
+
+  gsap.utils.toArray('textarea, select').forEach(input => {
+    input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+    input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+  })
 })
 </script>
 

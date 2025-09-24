@@ -132,6 +132,8 @@ import { useAuthStore } from '../stores/index.js'
 import VueCal from 'vue-cal'
 import 'vue-cal/dist/vuecal.css'
 
+const gsap = window.gsap
+
 export default {
   name: 'DoctorCalendar',
   components: {
@@ -346,6 +348,25 @@ export default {
 
       console.log('Loading initial data for date range:', fechaInicio, 'to', fechaFin)
       loadAvailableSlots(fechaInicio, fechaFin)
+
+      // GSAP animations
+      gsap.from('.vuecal', { opacity: 0, y: 20, duration: 1, ease: 'power2.out' })
+
+      gsap.utils.toArray('.back-btn, .create-btn, .book-btn, .cancel-btn, .save-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+        btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+      })
+
+      gsap.utils.toArray('.filter-select').forEach(select => {
+        select.addEventListener('focus', () => gsap.to(select, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        select.addEventListener('blur', () => gsap.to(select, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+      })
+
+      // Modal inputs
+      gsap.utils.toArray('input[type="date"], input[type="time"], select').forEach(input => {
+        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+      })
     })
 
     return {

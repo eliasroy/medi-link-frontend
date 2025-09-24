@@ -50,6 +50,8 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
 
+const gsap = window.gsap
+
 export default {
   name: 'AppointmentForm',
   setup() {
@@ -132,6 +134,17 @@ export default {
         hora_fin: route.query.hora_fin || '',
         modalidad: route.query.modalidad || ''
       }
+
+      // GSAP animations
+      gsap.utils.toArray('.form-input').forEach(input => {
+        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+      })
+
+      gsap.utils.toArray('.back-btn, .submit-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+        btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+      })
     })
 
     return {

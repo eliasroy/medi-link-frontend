@@ -39,10 +39,12 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
 import { useAuthStore } from '../stores/index.js'
+
+const gsap = window.gsap
 
 export default {
   name: 'Login',
@@ -72,6 +74,21 @@ export default {
         loading.value = false
       }
     }
+
+    onMounted(() => {
+      // GSAP animations for form inputs
+      gsap.utils.toArray('.form-input').forEach(input => {
+        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+      })
+
+      // Animation for login button
+      const loginBtn = document.querySelector('.login-btn')
+      if (loginBtn) {
+        loginBtn.addEventListener('mouseenter', () => gsap.to(loginBtn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+        loginBtn.addEventListener('mouseleave', () => gsap.to(loginBtn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+      }
+    })
 
     return {
       email,
