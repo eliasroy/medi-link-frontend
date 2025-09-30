@@ -1,6 +1,7 @@
 <template>
-  <div class="doctors-container">
-    <div class="doctors-content">
+  <MainLayout>
+    <div class="doctors-container">
+      <div class="doctors-content">
       <div class="page-header">
         <button @click="$router.go(-1)" class="back-btn">
           ← Volver
@@ -153,21 +154,26 @@
             Limpiar filtros e intentar de nuevo
           </button>
         </div>
+        </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
+import MainLayout from '../components/MainLayout.vue'
 import debounce from 'lodash.debounce'
 
 const gsap = window.gsap
 
 export default {
   name: 'Doctors',
+  components: {
+    MainLayout
+  },
   setup() {
     const router = useRouter()
     const doctors = ref([])

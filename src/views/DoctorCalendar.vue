@@ -1,6 +1,7 @@
 <template>
-  <div class="calendar-container">
-    <div class="calendar-content">
+  <MainLayout>
+    <div class="calendar-container">
+      <div class="calendar-content">
       <header class="calendar-header">
         <button @click="goBack" class="back-btn">
           ← Volver a Médicos
@@ -119,9 +120,10 @@
             </div>
           </form>
         </div>
+        </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script>
@@ -131,13 +133,15 @@ import { apiService } from '../services/api.js'
 import { useAuthStore } from '../stores/index.js'
 import VueCal from 'vue-cal'
 import 'vue-cal/dist/vuecal.css'
+import MainLayout from '../components/MainLayout.vue'
 
 const gsap = window.gsap
 
 export default {
   name: 'DoctorCalendar',
   components: {
-    VueCal
+    VueCal,
+    MainLayout
   },
   setup() {
     const route = useRoute()

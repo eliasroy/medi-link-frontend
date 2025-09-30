@@ -1,6 +1,7 @@
 <template>
-  <div class="appointments-container">
-    <div class="appointments-content">
+  <MainLayout>
+    <div class="appointments-container">
+      <div class="appointments-content">
       <div class="page-header">
         <button @click="$router.go(-1)" class="back-btn">
           ← Volver
@@ -94,9 +95,10 @@
             </div>
           </form>
         </div>
+        </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script setup>
@@ -104,6 +106,7 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/index.js'
 import { apiService } from '../services/api.js'
 import { decodeJWT } from '../utils/helpers.js'
+import MainLayout from '../components/MainLayout.vue'
 
 const gsap = window.gsap
 const authStore = useAuthStore()

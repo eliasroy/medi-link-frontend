@@ -1,6 +1,7 @@
 <template>
-  <div class="form-container">
-    <div class="form-content">
+  <MainLayout>
+    <div class="form-container">
+      <div class="form-content">
       <header class="form-header">
         <button @click="goBack" class="back-btn">
           ← Volver al Calendario
@@ -40,20 +41,25 @@
       <!-- Success/Error Messages -->
       <div v-if="message" class="message" :class="{ 'success': message.type === 'success', 'error': message.type === 'error' }">
         {{ message.text }}
+        </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
+import MainLayout from '../components/MainLayout.vue'
 
 const gsap = window.gsap
 
 export default {
   name: 'AppointmentForm',
+  components: {
+    MainLayout
+  },
   setup() {
     const route = useRoute()
     const router = useRouter()
