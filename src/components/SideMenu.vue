@@ -131,4 +131,20 @@ defineExpose({
   margin: 0;
   font-size: 18px;
 }
+
+.ant-menu-item {
+  background: transparent !important;
+}
+
+.ant-menu-item:hover {
+  background: transparent !important;
+}
+
+.ant-menu-item-selected {
+  background: transparent !important;
+}
+
+.ant-menu-item-active {
+  background: transparent !important;
+}
 </style>
