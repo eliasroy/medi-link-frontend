@@ -6,10 +6,12 @@
       </div>
       <nav class="horizontal-menu">
         <a href="#home" class="menu-btn">Inicio</a>
-        <a href="#about" class="menu-btn">Acerca de</a>
+        <a href="#about" class="menu-btn">¿Quiénes Somos?</a>
+        <a href="#stats" class="menu-btn">Estadísticas</a>
         <a href="#services" class="menu-btn">Servicios</a>
+        <a href="#pricing" class="menu-btn">Precios</a>
         <a href="#contact" class="menu-btn">Contacto</a>
-        <router-link to="/login" class="menu-btn">Iniciar Sesión</router-link>
+        <router-link to="/login" class="menu-btn primary">Iniciar Sesión</router-link>
         <router-link to="/register" class="menu-btn primary">Registro</router-link>
       </nav>
     </header>
@@ -108,22 +110,22 @@
       <section class="statistics" id="stats">
         <div class="section-container">
           <div class="stats-grid">
-            <div class="stat-item">
+            <div class="stat-item animate-text delay-1">
               <div class="stat-number" data-target="5000">0</div>
               <div class="stat-label">Pacientes Felices</div>
               <span class="emoji">😊</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-item animate-text delay-2">
               <div class="stat-number" data-target="200">0</div>
               <div class="stat-label">Médicos Expertos</div>
               <span class="emoji">👨‍⚕️</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-item animate-text delay-3">
               <div class="stat-number" data-target="50">0</div>
               <div class="stat-label">Clínicas Asociadas</div>
               <span class="emoji">🏥</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-item animate-text delay-4">
               <div class="stat-number" data-target="98">0</div>
               <div class="stat-label">Tasa de Satisfacción</div>
               <span class="emoji">⭐</span>
@@ -141,7 +143,7 @@
               <p>MediLink es una plataforma revolucionaria de atención médica que conecta a los pacientes con profesionales médicos de manera perfecta. Creemos en hacer que la atención médica sea accesible, eficiente y centrada en el paciente.</p>
               <p>Nuestra misión es cerrar la brecha entre los proveedores de atención médica y los pacientes a través de tecnología innovadora y atención compasiva.</p>
             </div>
-            <div class="who-image animate-image delay-2">
+            <div class=" animate-card delay-2">
               <img src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=400&h=300&fit=crop" alt="Consultorio médico moderno">
             </div>
           </div>
@@ -284,7 +286,7 @@
       </section>
 
       <!-- Transparent Pricing -->
-      <section class="pricing">
+      <section id="pricing" class="pricing">
         <div class="section-container">
           <h2 class="section-title animate-text">Precios Transparentes <span class="emoji">💎</span></h2>
           <div class="pricing-grid">
@@ -424,8 +426,72 @@
         </div>
       </section>
     </main>
-    <footer class="home-footer">
-      <p>&copy; 2025 MediLink. Todos los derechos reservados.</p>
+    <footer class="enhanced-footer">
+      <div class="footer-container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>MediLink <span class="emoji">🏥</span></h3>
+            <p>Conectando pacientes y médicos para un cuidado de salud mejor. Tu salud, nuestra prioridad.</p>
+            <div class="social-links">
+              <a href="#" class="social-link">📘 Facebook</a>
+              <a href="#" class="social-link">🐦 Twitter</a>
+              <a href="#" class="social-link">📷 Instagram</a>
+              <a href="#" class="social-link">💼 LinkedIn</a>
+            </div>
+          </div>
+
+          <div class="footer-section">
+            <h4>Enlaces Rápidos</h4>
+            <ul>
+              <li><a href="#about">¿Quiénes Somos?</a></li>
+              <li><a href="#services">Servicios</a></li>
+              <li><router-link to="/doctors">Buscar Médicos</router-link></li>
+              <li><router-link to="/register">Regístrate</router-link></li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h4>Servicios</h4>
+            <ul>
+              <li>Consulta General</li>
+              <li>Especialidades Médicas</li>
+              <li>Telemedicina 24/7</li>
+              <li>Agendamiento Online</li>
+              <li>Historial Médico</li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h4>Contacto</h4>
+            <ul>
+              <li>📧 soporte@medilink.com</li>
+              <li>📱 +1 (555) 123-4567</li>
+              <li>📍 Ciudad Médica, MC 12345</li>
+              <li>🕒 Lun-Vie: 8AM-8PM</li>
+            </ul>
+          </div>
+
+          <div class="footer-section">
+            <h4>Newsletter</h4>
+            <p>Suscríbete para recibir las últimas actualizaciones y consejos de salud.</p>
+            <div class="newsletter">
+              <input type="email" placeholder="Tu correo electrónico" class="newsletter-input">
+              <button class="newsletter-btn">Suscribirse</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="footer-bottom-content">
+            <p>&copy; 2025 MediLink. Todos los derechos reservados.</p>
+            <div class="footer-links">
+              <a href="#">Política de Privacidad</a>
+              <a href="#">Términos de Servicio</a>
+              <a href="#">Política de Cookies</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </footer>
   </div>
 </template>
@@ -717,10 +783,10 @@ onMounted(async () => {
       e.preventDefault()
       const target = document.querySelector(link.getAttribute('href'))
       if (target) {
-        gsap.to(window, {
-          duration: 1,
-          scrollTo: { y: target, offsetY: 80 },
-          ease: 'power2.inOut'
+        const targetPosition = target.offsetTop - 80 // 80px offset for header
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
         })
       }
     })
