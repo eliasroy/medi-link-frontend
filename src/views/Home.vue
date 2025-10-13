@@ -777,20 +777,7 @@ onMounted(async () => {
     }
   })
 
-  // Smooth scroll for menu links
-  gsap.utils.toArray('.horizontal-menu a[href^="#"]').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault()
-      const target = document.querySelector(link.getAttribute('href'))
-      if (target) {
-        const targetPosition = target.offsetTop - 80 // 80px offset for header
-        window.scrollTo({
-          top: targetPosition,
-          behavior: 'smooth'
-        })
-      }
-    })
-  })
+
 
   // Add scroll progress indicator
   const progressBar = document.createElement('div')
