@@ -5,8 +5,14 @@
 </template>
 
 <script>
+import { useAuthStore } from './stores/index.js'
+
 export default {
-  name: 'App'
+  name: 'App',
+  setup() {
+    const authStore = useAuthStore()
+    authStore.initializeAuth()
+  }
 }
 </script>
 

@@ -15,40 +15,15 @@ export const apiService = {
     }
   },
   registerMedico: async (medicoData) => {
-
     try {
-      const uri = import.meta.env.VITE_URL_BACKEND || 'http://localhost:3000';
-      const response = await fetch(`${uri}/api/usuarios/medico`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(medicoData)
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
+      return await requestService.post('/api/usuarios/medico', medicoData);
     } catch (error) {
       throw error;
     }
   },
   registerPaciente: async (pacienteData) => {
-
-
     try {
-      const uri = import.meta.env.VITE_URL_BACKEND || 'http://localhost:3000';
-      const response = await fetch(`${uri}/api/usuarios/paciente`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(pacienteData)
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
+      return await requestService.post('/api/usuarios/paciente', pacienteData);
     } catch (error) {
       throw error;
     }
@@ -62,13 +37,8 @@ export const apiService = {
   },
   getSpecialties: async () => {
     try {
-      const uri = import.meta.env.VITE_URL_BACKEND || 'http://localhost:3000';
-      const response = await fetch(`${uri}/api/especialidades`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data.data; // Return the data array
+      const response = await requestService.get('/api/especialidades');
+      return response.data; // Return the data array
     } catch (error) {
       throw error;
     }

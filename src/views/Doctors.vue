@@ -1,6 +1,7 @@
 <template>
-  <div class="doctors-container">
-    <div class="doctors-content">
+  <MainLayout>
+    <div class="doctors-container">
+      <div class="doctors-content">
       <div class="page-header">
         <button @click="$router.go(-1)" class="back-btn">
           ← Volver
@@ -84,7 +85,19 @@
       <!-- Results Section -->
       <div class="results-section">
         <div class="results-header">
-          <h3>Resultados ({{ doctors.length }} médicos)</h3>
+          <h3>Resultados ({{ totalDoctors }} médicos)</h3>
+          <div class="pagination-controls">
+            <label for="pageSize">Mostrar:</label>
+            <select id="pageSize" v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
+              <option :value="5">5</option>
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+            </select>
+            <div class="pagination-info">
+              Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalDoctors) }} de {{ totalDoctors }}
+            </div>
+          </div>
         </div>
 
         <!-- Loading State -->
@@ -102,7 +115,7 @@
         </div>
 
         <!-- Doctors Table -->
-        <div v-else-if="doctors.length > 0" class="table-container">
+        <div v-else-if="paginatedDoctors.length > 0" class="table-container">
           <table class="doctors-table">
             <thead>
               <tr>
@@ -116,7 +129,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="doctor in doctors" :key="doctor.id_medico">
+              <tr v-for="doctor in paginatedDoctors" :key="doctor.id_medico">
                 <td>{{ doctor.id_medico }}</td>
                 <td>{{ doctor.nombre }} {{ doctor.paterno }} {{ doctor.materno }}</td>
                 <td>{{ doctor.nro_colegiatura }}</td>
@@ -144,6 +157,36 @@
               </tr>
             </tbody>
           </table>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <button
+              @click="goToPage(currentPage - 1)"
+              :disabled="currentPage === 1"
+              class="pagination-btn"
+            >
+              ‹ Anterior
+            </button>
+
+            <div class="page-numbers">
+              <button
+                v-for="page in visiblePages"
+                :key="page"
+                @click="goToPage(page)"
+                :class="['page-number', { active: page === currentPage }]"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <button
+              @click="goToPage(currentPage + 1)"
+              :disabled="currentPage === totalPages"
+              class="pagination-btn"
+            >
+              Siguiente ›
+            </button>
+          </div>
         </div>
 
         <!-- No Results -->
@@ -153,19 +196,26 @@
             Limpiar filtros e intentar de nuevo
           </button>
         </div>
+        </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
+import MainLayout from '../components/MainLayout.vue'
 import debounce from 'lodash.debounce'
+
+const gsap = window.gsap
 
 export default {
   name: 'Doctors',
+  components: {
+    MainLayout
+  },
   setup() {
     const router = useRouter()
     const doctors = ref([])
@@ -178,6 +228,11 @@ export default {
       id_especialidad: '',
       calificacion_promedio: ''
     })
+
+    // Pagination
+    const currentPage = ref(1)
+    const pageSize = ref(10)
+    const totalDoctors = ref(0)
 
     // Debounced search function
     const debouncedSearch = debounce(() => {
@@ -206,9 +261,12 @@ export default {
 
         const data = await apiService.getDoctors(activeFilters)
         doctors.value = data
+        totalDoctors.value = data.length
+        currentPage.value = 1 // Reset to first page when loading new data
       } catch (err) {
         error.value = err.message || 'Error al cargar la lista de médicos'
         doctors.value = []
+        totalDoctors.value = 0
       } finally {
         loading.value = false
       }
@@ -232,6 +290,62 @@ export default {
       loadDoctors()
     }
 
+    // Pagination computed properties
+    const totalPages = computed(() => Math.ceil(totalDoctors.value / pageSize.value))
+
+    const paginatedDoctors = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value
+      const end = start + pageSize.value
+      return doctors.value.slice(start, end)
+    })
+
+    const visiblePages = computed(() => {
+      const pages = []
+      const total = totalPages.value
+      const current = currentPage.value
+
+      if (total <= 7) {
+        for (let i = 1; i <= total; i++) {
+          pages.push(i)
+        }
+      } else {
+        if (current <= 4) {
+          for (let i = 1; i <= 5; i++) {
+            pages.push(i)
+          }
+          pages.push('...')
+          pages.push(total)
+        } else if (current >= total - 3) {
+          pages.push(1)
+          pages.push('...')
+          for (let i = total - 4; i <= total; i++) {
+            pages.push(i)
+          }
+        } else {
+          pages.push(1)
+          pages.push('...')
+          for (let i = current - 1; i <= current + 1; i++) {
+            pages.push(i)
+          }
+          pages.push('...')
+          pages.push(total)
+        }
+      }
+
+      return pages.filter(page => page !== '...' || pages.indexOf(page) === pages.lastIndexOf(page))
+    })
+
+    // Pagination methods
+    const goToPage = (page) => {
+      if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page
+      }
+    }
+
+    const handlePageSizeChange = () => {
+      currentPage.value = 1 // Reset to first page when changing page size
+    }
+
     const getRatingClass = (rating) => {
       const numRating = parseFloat(rating)
       if (numRating >= 9) return 'excellent'
@@ -252,6 +366,17 @@ export default {
     onMounted(() => {
       loadSpecialties()
       loadDoctors()
+
+      // GSAP animations
+      gsap.utils.toArray('.filter-input, .filter-select').forEach(input => {
+        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+      })
+
+      gsap.utils.toArray('.clear-btn, .search-btn, .calendar-btn, .retry-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+        btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+      })
     })
 
     return {
@@ -267,305 +392,131 @@ export default {
       clearFilters,
       getRatingClass,
       viewCalendar,
-      router
+      router,
+      // Pagination
+      currentPage,
+      pageSize,
+      totalDoctors,
+      totalPages,
+      paginatedDoctors,
+      visiblePages,
+      goToPage,
+      handlePageSizeChange
     }
   }
 }
 </script>
 
+<style src="../assets/doctors.css" scoped></style>
+
 <style scoped>
-.doctors-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #25ced1, #ffffff);
-  padding: 2rem 1rem;
-}
-
-.doctors-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.page-header {
-  position: relative;
-  background: #f8f9fa;
-  border-bottom: 2px solid #25ced1;
-  padding: 1rem 2rem;
-}
-
-.back-btn {
-  position: absolute;
-  left: 2rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #6c757d;
-  color: #ffffff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s;
-}
-
-.back-btn:hover {
-  background: #5a6268;
-  transform: translateY(-50%) translateX(-2px);
-}
-
-.page-header h1 {
-  text-align: center;
-  color: #25ced1;
-  margin: 0;
-  font-size: 2rem;
-}
-
-.filters-section {
-  padding: 2rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-h3 {
-  margin: 0 0 1.5rem 0;
-  color: #333;
-  font-size: 1.2rem;
-}
-
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.filter-group {
+.results-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-label {
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #333;
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
-.filter-input,
-.filter-select {
-  padding: 0.75rem;
+.page-size-select {
+  padding: 5px 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 1rem;
-  transition: border-color 0.3s;
+  background: white;
 }
 
-.filter-input:focus,
-.filter-select:focus {
-  outline: none;
+.pagination-info {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 20px 0;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #25ced1;
+  color: white;
   border-color: #25ced1;
 }
 
-.filter-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-.clear-btn,
-.search-btn,
-.retry-btn {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.clear-btn {
-  background: #6c757d;
-  color: #ffffff;
-}
-
-.clear-btn:hover {
-  background: #5a6268;
-}
-
-.search-btn {
-  background: #25ced1;
-  color: #ffffff;
-}
-
-.search-btn:hover:not(:disabled) {
-  background: #1fa3a6;
-}
-
-.search-btn:disabled {
-  opacity: 0.6;
+.pagination-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.retry-btn {
-  background: #28a745;
-  color: #ffffff;
+.page-numbers {
+  display: flex;
+  gap: 5px;
 }
 
-.retry-btn:hover {
-  background: #218838;
-}
-
-.results-section {
-  padding: 2rem;
-}
-
-.results-header {
-  margin-bottom: 1.5rem;
-}
-
-.results-header h3 {
-  margin: 0;
+.page-number {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background: white;
   color: #333;
-}
-
-.loading-state,
-.error-state,
-.no-results {
-  text-align: center;
-  padding: 3rem 2rem;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #25ced1;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.error-message {
-  color: #dc3545;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.doctors-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-.doctors-table th,
-.doctors-table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.doctors-table th {
-  background: #25ced1;
-  color: #ffffff;
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-}
-
-.doctors-table tr:nth-child(even) {
-  background: #f8f9fa;
-}
-
-.doctors-table tr:hover {
-  background: #e3f2fd;
-}
-
-.specialty-cell strong {
-  display: block;
-  color: #25ced1;
-  margin-bottom: 0.25rem;
-}
-
-.specialty-cell small {
-  color: #6c757d;
-  font-size: 0.85rem;
-}
-
-.rating {
-  font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-}
-
-.rating.excellent {
-  background: #d4edda;
-  color: #155724;
-}
-
-.rating.good {
-  background: #cce5ff;
-  color: #004085;
-}
-
-.rating.average {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.rating.poor {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-.calendar-btn {
-  background: #17a2b8;
-  color: #ffffff;
-  border: none;
-  padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s;
-  white-space: nowrap;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  text-align: center;
 }
 
-.calendar-btn:hover {
-  background: #138496;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+.page-number:hover {
+  background: #f5f5f5;
 }
 
-.calendar-btn:active {
-  transform: translateY(0);
+.page-number.active {
+  background: #25ced1;
+  color: white;
+  border-color: #25ced1;
 }
 
 @media (max-width: 768px) {
-  .filters-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-actions {
+  .results-header {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
   }
 
-  .doctors-table {
-    font-size: 0.9rem;
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
-  .doctors-table th,
-  .doctors-table td {
-    padding: 0.5rem;
+  .pagination {
+    flex-wrap: wrap;
+  }
+
+  .page-numbers {
+    order: 1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pagination-btn {
+    flex: 1;
+    min-width: 80px;
   }
 }
 </style>

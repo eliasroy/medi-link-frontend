@@ -1,6 +1,7 @@
 <template>
-  <div class="form-container">
-    <div class="form-content">
+  <MainLayout>
+    <div class="form-container">
+      <div class="form-content">
       <header class="form-header">
         <button @click="goBack" class="back-btn">
           ← Volver al Calendario
@@ -40,18 +41,25 @@
       <!-- Success/Error Messages -->
       <div v-if="message" class="message" :class="{ 'success': message.type === 'success', 'error': message.type === 'error' }">
         {{ message.text }}
+        </div>
       </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
+import MainLayout from '../components/MainLayout.vue'
+
+const gsap = window.gsap
 
 export default {
   name: 'AppointmentForm',
+  components: {
+    MainLayout
+  },
   setup() {
     const route = useRoute()
     const router = useRouter()
@@ -132,6 +140,17 @@ export default {
         hora_fin: route.query.hora_fin || '',
         modalidad: route.query.modalidad || ''
       }
+
+      // GSAP animations
+      gsap.utils.toArray('.form-input').forEach(input => {
+        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+      })
+
+      gsap.utils.toArray('.back-btn, .submit-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+        btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+      })
     })
 
     return {
@@ -146,141 +165,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.form-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #25ced1, #ffffff);
-  padding: 2rem 1rem;
-}
-
-.form-content {
-  max-width: 600px;
-  margin: 0 auto;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.form-header {
-  padding: 2rem;
-  background: #f8f9fa;
-  border-bottom: 2px solid #25ced1;
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.back-btn {
-  background: #6c757d;
-  color: #ffffff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s;
-}
-
-.back-btn:hover {
-  background: #5a6268;
-}
-
-.appointment-form {
-  padding: 2rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #333;
-}
-
-.form-input,
-.form-select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: border-color 0.3s;
-}
-
-.form-input:focus,
-.form-select:focus {
-  outline: none;
-  border-color: #25ced1;
-}
-
-.appointment-details {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 4px;
-  margin-bottom: 1.5rem;
-  border: 1px solid #dee2e6;
-}
-
-.appointment-details h3 {
-  margin: 0 0 1rem 0;
-  color: #333;
-}
-
-.appointment-details p {
-  margin: 0.5rem 0;
-  color: #666;
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: #28a745;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.submit-btn:hover:not(:disabled) {
-  background: #218838;
-}
-
-.submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.message {
-  padding: 1rem;
-  margin: 1rem 2rem;
-  border-radius: 4px;
-  text-align: center;
-  font-weight: 500;
-}
-
-.message.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.message.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-@media (max-width: 768px) {
-  .form-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-}
-</style>
+<style src="../assets/appointmentForm.css" scoped></style>

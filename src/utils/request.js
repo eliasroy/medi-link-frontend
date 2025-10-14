@@ -1,54 +1,54 @@
-import queryString from "querystring";
+import axios from 'axios';
 
 class Request {
     constructor() {
-        this.baseURL = import.meta.env.VITE_URL_BACKEND || '';
+        this.axiosInstance = axios.create({
+            baseURL: import.meta.env.VITE_URL_BACKEND || '',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // Add request interceptor to include auth token
+        this.axiosInstance.interceptors.request.use(
+            (config) => {
+                const token = this._getAuthToken();
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+                return config;
+            },
+            (error) => {
+                return Promise.reject(error);
+            }
+        );
     }
 
     get(path, parameters = {}, customHeaders = {}) {
-        const params = queryString.stringify(parameters);
-        const url = params ? `${path}?${params}` : path;
-
-        return this._makeRequest("GET", url, null, customHeaders);
+        return this.axiosInstance.get(path, {
+            params: parameters,
+            headers: customHeaders,
+        }).then(response => response.data);
     }
 
     post(path, data = null, customHeaders = {}) {
-        return this._makeRequest("POST", path, data, customHeaders);
+        return this.axiosInstance.post(path, data, {
+            headers: customHeaders,
+        }).then(response => response.data);
     }
 
     put(path, data = null, customHeaders = {}) {
-        return this._makeRequest("PUT", path, data, customHeaders);
+        return this.axiosInstance.put(path, data, {
+            headers: customHeaders,
+        }).then(response => response.data);
     }
 
     delete(path, data = null, customHeaders = {}) {
-        return this._makeRequest("DELETE", path, data, customHeaders);
-    }
-
-    _makeRequest(method, path, data, customHeaders) {
-        const options = {
-            method,
-            headers: this._buildHeaders(customHeaders),
-        };
-
-        if (data && method !== "GET") {
-            options.body = JSON.stringify(data);
-        }
-
-        return this._request(path, options);
-    }
-
-    _buildHeaders(customHeaders = {}) {
-        const defaultHeaders = {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-        };
-
-        const token = this._getAuthToken();
-        if (token) {
-            defaultHeaders.Authorization = `Bearer ${token}`;
-        }
-
-        return { ...defaultHeaders, ...customHeaders };
+        return this.axiosInstance.delete(path, {
+            data: data,
+            headers: customHeaders,
+        }).then(response => response.data);
     }
 
     _getAuthToken() {
@@ -57,24 +57,6 @@ class Request {
         } catch (error) {
             console.warn("No se pudo acceder al localStorage:", error);
             return null;
-        }
-    }
-
-    async _request(path, options) {
-        try {
-            const url = this.baseURL ? `${this.baseURL}${path}` : path;
-            const response = await fetch(url, options);
-
-            // Verificar si la respuesta tiene contenido JSON
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.includes("application/json")) {
-                return await response.json();
-            }
-
-            return await response.text();
-        } catch (error) {
-            console.error("Request error:", error);
-            throw error;
         }
     }
 }

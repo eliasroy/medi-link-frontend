@@ -39,10 +39,12 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
 import { useAuthStore } from '../stores/index.js'
+
+const gsap = window.gsap
 
 export default {
   name: 'Login',
@@ -64,14 +66,29 @@ export default {
         success.value = response.mensaje
         authStore.setToken(response.token)
         authStore.setUser(response.usuario)
-        // Redirect to home or dashboard
-        router.push('/')
+        // Redirect to panel after successful login
+        router.push('/panel')
       } catch (err) {
         error.value = err.message || 'Login failed'
       } finally {
         loading.value = false
       }
     }
+
+    onMounted(() => {
+      // GSAP animations for form inputs
+      gsap.utils.toArray('.form-input').forEach(input => {
+        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
+      })
+
+      // Animation for login button
+      const loginBtn = document.querySelector('.login-btn')
+      if (loginBtn) {
+        loginBtn.addEventListener('mouseenter', () => gsap.to(loginBtn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
+        loginBtn.addEventListener('mouseleave', () => gsap.to(loginBtn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+      }
+    })
 
     return {
       email,
@@ -86,96 +103,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: linear-gradient(135deg, #25ced1, #ffffff);
-}
-
-.login-form {
-  background: #ffffff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-}
-
-h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #25ced1;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.login-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: #25ced1;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.login-btn:hover:not(:disabled) {
-  background: #1fa3a6;
-}
-
-.login-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.form-footer {
-  text-align: center;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #eee;
-}
-
-.register-link {
-  color: #25ced1;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.register-link:hover {
-  text-decoration: underline;
-}
-
-.error {
-  color: red;
-  text-align: center;
-  margin-top: 1rem;
-}
-
-.success {
-  color: green;
-  text-align: center;
-  margin-top: 1rem;
-}
-</style>
+<style src="../assets/login.css" scoped></style>
