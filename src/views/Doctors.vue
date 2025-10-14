@@ -85,7 +85,19 @@
       <!-- Results Section -->
       <div class="results-section">
         <div class="results-header">
-          <h3>Resultados ({{ doctors.length }} médicos)</h3>
+          <h3>Resultados ({{ totalDoctors }} médicos)</h3>
+          <div class="pagination-controls">
+            <label for="pageSize">Mostrar:</label>
+            <select id="pageSize" v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
+              <option :value="5">5</option>
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+            </select>
+            <div class="pagination-info">
+              Mostrando {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalDoctors) }} de {{ totalDoctors }}
+            </div>
+          </div>
         </div>
 
         <!-- Loading State -->
@@ -103,7 +115,7 @@
         </div>
 
         <!-- Doctors Table -->
-        <div v-else-if="doctors.length > 0" class="table-container">
+        <div v-else-if="paginatedDoctors.length > 0" class="table-container">
           <table class="doctors-table">
             <thead>
               <tr>
@@ -117,7 +129,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="doctor in doctors" :key="doctor.id_medico">
+              <tr v-for="doctor in paginatedDoctors" :key="doctor.id_medico">
                 <td>{{ doctor.id_medico }}</td>
                 <td>{{ doctor.nombre }} {{ doctor.paterno }} {{ doctor.materno }}</td>
                 <td>{{ doctor.nro_colegiatura }}</td>
@@ -145,6 +157,36 @@
               </tr>
             </tbody>
           </table>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <button
+              @click="goToPage(currentPage - 1)"
+              :disabled="currentPage === 1"
+              class="pagination-btn"
+            >
+              ‹ Anterior
+            </button>
+
+            <div class="page-numbers">
+              <button
+                v-for="page in visiblePages"
+                :key="page"
+                @click="goToPage(page)"
+                :class="['page-number', { active: page === currentPage }]"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <button
+              @click="goToPage(currentPage + 1)"
+              :disabled="currentPage === totalPages"
+              class="pagination-btn"
+            >
+              Siguiente ›
+            </button>
+          </div>
         </div>
 
         <!-- No Results -->
@@ -161,7 +203,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
 import MainLayout from '../components/MainLayout.vue'
@@ -186,6 +228,11 @@ export default {
       id_especialidad: '',
       calificacion_promedio: ''
     })
+
+    // Pagination
+    const currentPage = ref(1)
+    const pageSize = ref(10)
+    const totalDoctors = ref(0)
 
     // Debounced search function
     const debouncedSearch = debounce(() => {
@@ -214,9 +261,12 @@ export default {
 
         const data = await apiService.getDoctors(activeFilters)
         doctors.value = data
+        totalDoctors.value = data.length
+        currentPage.value = 1 // Reset to first page when loading new data
       } catch (err) {
         error.value = err.message || 'Error al cargar la lista de médicos'
         doctors.value = []
+        totalDoctors.value = 0
       } finally {
         loading.value = false
       }
@@ -238,6 +288,62 @@ export default {
         calificacion_promedio: ''
       }
       loadDoctors()
+    }
+
+    // Pagination computed properties
+    const totalPages = computed(() => Math.ceil(totalDoctors.value / pageSize.value))
+
+    const paginatedDoctors = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value
+      const end = start + pageSize.value
+      return doctors.value.slice(start, end)
+    })
+
+    const visiblePages = computed(() => {
+      const pages = []
+      const total = totalPages.value
+      const current = currentPage.value
+
+      if (total <= 7) {
+        for (let i = 1; i <= total; i++) {
+          pages.push(i)
+        }
+      } else {
+        if (current <= 4) {
+          for (let i = 1; i <= 5; i++) {
+            pages.push(i)
+          }
+          pages.push('...')
+          pages.push(total)
+        } else if (current >= total - 3) {
+          pages.push(1)
+          pages.push('...')
+          for (let i = total - 4; i <= total; i++) {
+            pages.push(i)
+          }
+        } else {
+          pages.push(1)
+          pages.push('...')
+          for (let i = current - 1; i <= current + 1; i++) {
+            pages.push(i)
+          }
+          pages.push('...')
+          pages.push(total)
+        }
+      }
+
+      return pages.filter(page => page !== '...' || pages.indexOf(page) === pages.lastIndexOf(page))
+    })
+
+    // Pagination methods
+    const goToPage = (page) => {
+      if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page
+      }
+    }
+
+    const handlePageSizeChange = () => {
+      currentPage.value = 1 // Reset to first page when changing page size
     }
 
     const getRatingClass = (rating) => {
@@ -286,10 +392,131 @@ export default {
       clearFilters,
       getRatingClass,
       viewCalendar,
-      router
+      router,
+      // Pagination
+      currentPage,
+      pageSize,
+      totalDoctors,
+      totalPages,
+      paginatedDoctors,
+      visiblePages,
+      goToPage,
+      handlePageSizeChange
     }
   }
 }
 </script>
 
 <style src="../assets/doctors.css" scoped></style>
+
+<style scoped>
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.page-size-select {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 20px 0;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #25ced1;
+  color: white;
+  border-color: #25ced1;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 5px;
+}
+
+.page-number {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  text-align: center;
+}
+
+.page-number:hover {
+  background: #f5f5f5;
+}
+
+.page-number.active {
+  background: #25ced1;
+  color: white;
+  border-color: #25ced1;
+}
+
+@media (max-width: 768px) {
+  .results-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
+
+  .page-numbers {
+    order: 1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pagination-btn {
+    flex: 1;
+    min-width: 80px;
+  }
+}
+</style>
