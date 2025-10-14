@@ -353,24 +353,42 @@ export default {
       console.log('Loading initial data for date range:', fechaInicio, 'to', fechaFin)
       loadAvailableSlots(fechaInicio, fechaFin)
 
-      // GSAP animations
-      gsap.from('.vuecal', { opacity: 0, y: 20, duration: 1, ease: 'power2.out' })
+      // GSAP entrance animations
+      gsap.from('.calendar-header', { opacity: 0, y: -30, duration: 0.8, ease: 'power2.out' })
+      gsap.from('.filters-section', { opacity: 0, y: 20, duration: 0.8, delay: 0.2, ease: 'power2.out' })
+      gsap.from('.vuecal', { opacity: 0, y: 20, duration: 1, delay: 0.4, ease: 'power2.out' })
+      gsap.from('.appointment-section', { opacity: 0, y: 20, duration: 0.8, delay: 0.6, ease: 'power2.out' })
 
+      // Enhanced hover animations for buttons
       gsap.utils.toArray('.back-btn, .create-btn, .book-btn, .cancel-btn, .save-btn').forEach(btn => {
-        btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, duration: 0.3, ease: 'power2.out' }))
-        btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power2.out' }))
+        btn.addEventListener('mouseenter', () => gsap.to(btn, { scale: 1.05, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', duration: 0.3, ease: 'power2.out' }))
+        btn.addEventListener('mouseleave', () => gsap.to(btn, { scale: 1, boxShadow: 'none', duration: 0.3, ease: 'power2.out' }))
       })
 
+      // Enhanced focus animations for selects
       gsap.utils.toArray('.filter-select').forEach(select => {
-        select.addEventListener('focus', () => gsap.to(select, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        select.addEventListener('focus', () => gsap.to(select, { scale: 1.02, boxShadow: '0 0 15px rgba(0, 123, 255, 0.3)', duration: 0.3 }))
         select.addEventListener('blur', () => gsap.to(select, { scale: 1, boxShadow: 'none', duration: 0.3 }))
       })
 
-      // Modal inputs
+      // Modal inputs with enhanced focus
       gsap.utils.toArray('input[type="date"], input[type="time"], select').forEach(input => {
-        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 10px rgba(37, 206, 209, 0.5)', duration: 0.3 }))
+        input.addEventListener('focus', () => gsap.to(input, { scale: 1.02, boxShadow: '0 0 15px rgba(0, 123, 255, 0.3)', duration: 0.3 }))
         input.addEventListener('blur', () => gsap.to(input, { scale: 1, boxShadow: 'none', duration: 0.3 }))
       })
+
+      // Animate modal appearance
+      gsap.from('.modal-content', { opacity: 0, scale: 0.9, duration: 0.5, ease: 'back.out(1.7)' })
+
+      // Add click animations for calendar events
+      gsap.utils.toArray('.vuecal__event').forEach(event => {
+        event.addEventListener('click', () => {
+          gsap.to(event, { scale: 0.95, duration: 0.1, yoyo: true, repeat: 1, ease: 'power2.out' })
+        })
+      })
+
+      // Stagger animation for filter groups
+      gsap.from('.filter-group', { opacity: 0, y: 10, duration: 0.5, stagger: 0.1, delay: 0.3, ease: 'power2.out' })
     })
 
     return {
