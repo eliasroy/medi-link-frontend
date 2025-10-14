@@ -14,7 +14,15 @@
         <div>
           <h1 style="margin: 0; color: #25ced1;">Sistema Médico</h1>
         </div>
-        <div></div>
+        <div class="header-user-info">
+          <div class="user-icon" @mouseenter="showUserInfo = true" @mouseleave="showUserInfo = false">
+            👤
+            <div v-if="showUserInfo" class="user-tooltip">
+              <p><strong>Usuario:</strong> {{ user?.nombre }} {{ user?.paterno }}</p>
+              <p><strong>Rol:</strong> {{ user?.rol }}</p>
+            </div>
+          </div>
+        </div>
       </a-layout-header>
       <a-layout-content style="margin: 24px 16px; padding: 24px; background: #fff; min-height: 280px;">
         <slot />
@@ -24,13 +32,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import SideMenu from './SideMenu.vue'
 import { Button } from 'ant-design-vue'
 import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons-vue'
+import { useAuthStore } from '../stores/index.js'
 
+const authStore = useAuthStore()
+const user = computed(() => authStore.user)
 const sideMenuRef = ref(null)
 const collapsed = ref(true)
+const showUserInfo = ref(false)
 
 const toggleMenu = () => {
   if (sideMenuRef.value) {
@@ -41,5 +53,53 @@ const toggleMenu = () => {
 </script>
 
 <style scoped>
-/* Additional styles if needed */
+.header-user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-icon {
+  font-size: 1.5rem;
+  cursor: pointer;
+  position: relative;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.user-icon:hover {
+  background-color: rgba(37, 206, 209, 0.1);
+}
+
+.user-tooltip {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 180px;
+  animation: tooltipFadeIn 0.3s ease-out;
+  margin-top: 5px;
+}
+
+.user-tooltip p {
+  margin: 3px 0;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+@keyframes tooltipFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>
