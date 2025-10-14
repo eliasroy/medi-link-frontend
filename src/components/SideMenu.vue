@@ -80,11 +80,14 @@ const userRole = computed(() => authStore.user?.rol)
 
 const handleLogout = () => {
   authStore.logout()
+  router.push('/')
 }
 
 const handleMenuClick = ({ key }) => {
   if (key === 'logout') {
     handleLogout()
+  } else if (key === 'home') {
+    router.push('/panel')
   } else if (key === 'doctor-calendar') {
     const featuredDoctorId = authStore.user?.id || 2
     router.push(`/doctor/${featuredDoctorId}/calendar`)

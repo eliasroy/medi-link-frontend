@@ -66,8 +66,8 @@ export default {
         success.value = response.mensaje
         authStore.setToken(response.token)
         authStore.setUser(response.usuario)
-        // Redirect to home or dashboard
-        router.push('/')
+        // Redirect to panel after successful login
+        router.push('/panel')
       } catch (err) {
         error.value = err.message || 'Login failed'
       } finally {
