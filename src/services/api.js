@@ -145,5 +145,12 @@ export const apiService = {
     } catch (error) {
       throw error;
     }
+  },
+  changePassword: async (passwordData) => {
+    try {
+      return await requestService.post('/api/auth/change-password', passwordData);
+    } catch (error) {
+      throw error;
+    }
   }
 }
