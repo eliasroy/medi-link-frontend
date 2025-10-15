@@ -1,6 +1,9 @@
 <template>
   <div class="login-container">
-    <form @submit.prevent="handleLogin" class="login-form">
+    <!-- Loading Spinner for Panel Redirect -->
+    <LoadingSpinner v-if="redirectingToPanel" text="Cargando Panel..." />
+
+    <form @submit.prevent="handleLogin" class="login-form" v-show="!redirectingToPanel">
       <h2>Login</h2>
       <div class="form-group">
         <label for="email">Email:</label>
@@ -43,15 +46,20 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/api.js'
 import { useAuthStore } from '../stores/index.js'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 const gsap = window.gsap
 
 export default {
   name: 'Login',
+  components: {
+    LoadingSpinner
+  },
   setup() {
     const email = ref('')
     const password = ref('')
     const loading = ref(false)
+    const redirectingToPanel = ref(false)
     const error = ref('')
     const success = ref('')
     const router = useRouter()
@@ -66,8 +74,14 @@ export default {
         success.value = response.mensaje
         authStore.setToken(response.token)
         authStore.setUser(response.usuario)
-        // Redirect to panel after successful login
-        router.push('/panel')
+
+        // Show loading spinner while redirecting to panel
+        redirectingToPanel.value = true
+
+        // Add a small delay to show the loading state, then redirect
+        setTimeout(() => {
+          router.push('/panel')
+        }, 1500)
       } catch (err) {
         error.value = err.message || 'Login failed'
       } finally {
@@ -94,6 +108,7 @@ export default {
       email,
       password,
       loading,
+      redirectingToPanel,
       error,
       success,
       handleLogin,
