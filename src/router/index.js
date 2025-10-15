@@ -1,13 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
-import Panel from '../views/Panel.vue'
 import Doctors from '../views/Doctors.vue'
 import DoctorCalendar from '../views/DoctorCalendar.vue'
 import AppointmentForm from '../views/AppointmentForm.vue'
 import PatientAppointments from '../views/PatientAppointments.vue'
 import DoctorAppointments from '../views/DoctorAppointments.vue'
+
+// Lazy load components
+const Home = () => import('../views/Home.vue')
+const Panel = () => import('../views/Panel.vue')
 
 const routes = [
   {

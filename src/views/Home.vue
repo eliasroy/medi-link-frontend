@@ -1,5 +1,7 @@
 <template>
   <div class="homepage">
+    <!-- Loading Spinner for Home Page -->
+    <LoadingSpinner v-if="isLoading" text="Cargando MediLink..." />
     <header class="horizontal-header">
       <div class="logo">
         <h2>MediLink</h2>
@@ -500,6 +502,7 @@
 import { computed, ref, onMounted, nextTick } from 'vue'
 import { useAuthStore } from '../stores/index.js'
 import { useRouter } from 'vue-router'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 const gsap = window.gsap
 const ScrollTrigger = window.ScrollTrigger
@@ -507,6 +510,7 @@ const ScrollTrigger = window.ScrollTrigger
 const router = useRouter()
 const authStore = useAuthStore()
 const featuredDoctorId = ref(2)
+const isLoading = ref(true)
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const userRole = computed(() => authStore.user?.rol)
@@ -517,6 +521,11 @@ const handleLogout = () => {
 
 onMounted(async () => {
   featuredDoctorId.value = authStore.user?.id || 2
+
+  // Show loading spinner for 2 seconds to simulate lazy loading
+  setTimeout(() => {
+    isLoading.value = false
+  }, 2000)
 
   // Register ScrollTrigger plugin
   gsap.registerPlugin(ScrollTrigger)
@@ -1136,27 +1145,29 @@ onMounted(async () => {
   //   }
   // })
 
-  // Page load animation sequence
-  const tl = gsap.timeline()
+  // Page load animation sequence (only after loading is complete)
+  if (!isLoading.value) {
+    const tl = gsap.timeline()
 
-  tl.from('.horizontal-header', {
-    y: -100,
-    opacity: 0,
-    duration: 0.8,
-    ease: 'power2.out'
-  })
-  .from('.banner-section', {
-    scale: 1.2,
-    opacity: 0,
-    duration: 1.5,
-    ease: 'power2.out'
-  }, '-=0.5')
-  .from('.main-content > section:first-child', {
-    y: 50,
-    opacity: 0,
-    duration: 1,
-    ease: 'power2.out'
-  }, '-=0.5')
+    tl.from('.horizontal-header', {
+      y: -100,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power2.out'
+    })
+    .from('.banner-carousel', {
+      scale: 1.2,
+      opacity: 0,
+      duration: 1.5,
+      ease: 'power2.out'
+    }, '-=0.5')
+    .from('.main-content > section:first-child', {
+      y: 50,
+      opacity: 0,
+      duration: 1,
+      ease: 'power2.out'
+    }, '-=0.5')
+  }
 
   // Add hover effects to all cards
   gsap.utils.toArray('.clinic-card, .service-card, .reason-card, .pricing-card, .stat-item').forEach(card => {
