@@ -33,11 +33,54 @@
         <router-link to="/register" class="register-link">
           ¿No tienes cuenta? Regístrate
         </router-link>
+        <button type="button" @click="showForgotPassword = true" class="forgot-password-link">
+          Me olvidé contraseña
+        </button>
       </div>
 
       <p v-if="error" class="error">{{ error }}</p>
       <p v-if="success" class="success">{{ success }}</p>
     </form>
+
+    <!-- Forgot Password Modal -->
+    <div v-if="showForgotPassword" class="modal-overlay" @click="closeForgotPassword">
+      <div class="modal-content" @click.stop>
+        <h3>Restablecer Contraseña</h3>
+        <form @submit.prevent="handleForgotPassword" class="forgot-password-form">
+          <div class="form-group">
+            <label for="reset-email">Correo Electrónico:</label>
+            <input
+              type="email"
+              id="reset-email"
+              v-model="resetEmail"
+              required
+              class="form-input"
+              placeholder="Ingresa tu correo electrónico"
+            />
+          </div>
+          <div class="form-group">
+            <label for="new-password">Nueva Contraseña:</label>
+            <input
+              type="password"
+              id="new-password"
+              v-model="newPassword"
+              required
+              class="form-input"
+              placeholder="Ingresa tu nueva contraseña"
+              minlength="6"
+            />
+            <small class="password-hint">Mínimo 6 caracteres</small>
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="reset-btn" :disabled="resetLoading">
+              {{ resetLoading ? 'Actualizando...' : 'Restablecer Contraseña' }}
+            </button>
+          </div>
+        </form>
+        <p v-if="resetError" class="error">{{ resetError }}</p>
+        <p v-if="resetSuccess" class="success">{{ resetSuccess }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -62,6 +105,12 @@ export default {
     const redirectingToPanel = ref(false)
     const error = ref('')
     const success = ref('')
+    const showForgotPassword = ref(false)
+    const resetEmail = ref('')
+    const newPassword = ref('')
+    const resetLoading = ref(false)
+    const resetError = ref('')
+    const resetSuccess = ref('')
     const router = useRouter()
     const authStore = useAuthStore()
 
@@ -89,6 +138,39 @@ export default {
       }
     }
 
+    const handleForgotPassword = async () => {
+      resetLoading.value = true
+      resetError.value = ''
+      resetSuccess.value = ''
+      try {
+        const response = await apiService.changePassword({
+          email: resetEmail.value,
+          newPassword: newPassword.value
+        })
+        resetSuccess.value = response.mensaje
+
+        // Close modal and redirect to login after success
+        setTimeout(() => {
+          closeForgotPassword()
+          // Clear login form messages
+          error.value = ''
+          success.value = 'Contraseña actualizada exitosamente. Por favor inicia sesión.'
+        }, 2000)
+      } catch (err) {
+        resetError.value = err.message || 'Error al cambiar la contraseña'
+      } finally {
+        resetLoading.value = false
+      }
+    }
+
+    const closeForgotPassword = () => {
+      showForgotPassword.value = false
+      resetEmail.value = ''
+      newPassword.value = ''
+      resetError.value = ''
+      resetSuccess.value = ''
+    }
+
     onMounted(() => {
       // GSAP animations for form inputs
       gsap.utils.toArray('.form-input').forEach(input => {
@@ -111,7 +193,15 @@ export default {
       redirectingToPanel,
       error,
       success,
+      showForgotPassword,
+      resetEmail,
+      newPassword,
+      resetLoading,
+      resetError,
+      resetSuccess,
       handleLogin,
+      handleForgotPassword,
+      closeForgotPassword,
       authStore
     }
   }
