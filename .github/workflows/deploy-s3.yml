@@ -18,13 +18,14 @@ jobs:
         with:
           node-version: 20
 
+      - name: Set VITE_API_URL
+        run: echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: npm install
 
       - name: Build Vue app
         run: npm run build
-        env:
-            VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
