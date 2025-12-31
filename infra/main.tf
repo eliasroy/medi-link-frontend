@@ -1,10 +1,31 @@
 resource "aws_route53_zone" "this" {
   name = var.domain_name
 }
+//registrar los nuevos ns en el dominio
+resource "aws_route53domains_registered_domain" "this" {
+  domain_name = var.domain_name
+
+  name_server {
+    name = aws_route53_zone.this.name_servers[0]
+  }
+
+  name_server {
+    name = aws_route53_zone.this.name_servers[1]
+  }
+
+  name_server {
+    name = aws_route53_zone.this.name_servers[2]
+  }
+
+  name_server {
+    name = aws_route53_zone.this.name_servers[3]
+  }
+}
 
 //Bucket S3 para Vue.js Frontend
 resource "aws_s3_bucket" "frontend" {
   bucket = var.domain_name
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "frontend" {
@@ -49,6 +70,8 @@ resource "aws_route53_record" "cert_validation" {
   records = [each.value.record]
   ttl     = 60
 }
+
+
 
 resource "aws_acm_certificate_validation" "cert" {
   certificate_arn         = aws_acm_certificate.cert.arn
